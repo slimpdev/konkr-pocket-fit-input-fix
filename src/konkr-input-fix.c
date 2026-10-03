@@ -28,7 +28,7 @@
 static volatile sig_atomic_t running = 1;
 
 struct source_desc {
-    const char *name;
+    const char *name_prefix;
     unsigned short vendor;
     unsigned short product;
     int trigger_left;
@@ -108,14 +108,18 @@ static int find_source_event(const struct source_desc *wanted, char *out, size_t
         if (fd < 0)
             continue;
 
-        bool match = false;
-        if (wanted->name) {
-            match = get_name(fd, name, sizeof(name)) >= 0 && strcmp(name, wanted->name) == 0;
-        } else {
+        bool match = true;
+        if (wanted->name_prefix) {
+            if (get_name(fd, name, sizeof(name)) < 0 ||
+                strncmp(name, wanted->name_prefix, strlen(wanted->name_prefix)) != 0)
+                match = false;
+        }
+        if (match && (wanted->vendor || wanted->product)) {
             struct input_id id;
             memset(&id, 0, sizeof(id));
-            if (ioctl(fd, EVIOCGID, &id) >= 0)
-                match = id.vendor == wanted->vendor && id.product == wanted->product;
+            if (ioctl(fd, EVIOCGID, &id) < 0 ||
+                id.vendor != wanted->vendor || id.product != wanted->product)
+                match = false;
         }
 
         close(fd);
@@ -132,8 +136,8 @@ static int wait_for_source(const char *variant, char *path, size_t path_len, str
         { "AYANEO MCU Gamepad", 0, 0, ABS_Z, ABS_RZ },
     };
     static const struct source_desc fit[] = {
-        { NULL, 0x4001, 0x0428, ABS_BRAKE, ABS_GAS },
-        { NULL, 0x045e, 0x028e, ABS_Z, ABS_RZ },
+        { "AYANEO Controller", 0x4001, 0x0428, ABS_BRAKE, ABS_GAS },
+        { "Microsoft X-Box 360 pad", 0x045e, 0x028e, ABS_Z, ABS_RZ },
     };
 
     const struct source_desc *list = NULL;
@@ -403,7 +407,7 @@ int main(int argc, char **argv) {
 
     char source_name[256];
     if (get_name(sfd, source_name, sizeof(source_name)) < 0)
-        snprintf(source_name, sizeof(source_name), "%s", source.name ? source.name : "KONKR controller");
+        snprintf(source_name, sizeof(source_name), "%s", source.name_prefix ? source.name_prefix : "KONKR controller");
 
     struct input_id sid;
     memset(&sid, 0, sizeof(sid));
