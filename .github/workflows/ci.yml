@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check installer syntax
+        run: bash -n install.sh
+      - name: Build filter
+        run: cc -O2 -Wall -Wextra -Werror src/konkr-input-fix.c -o konkr-input-fix
+      - name: Print version
+        run: ./konkr-input-fix --version
