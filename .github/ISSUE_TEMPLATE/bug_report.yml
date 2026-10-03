@@ -1,0 +1,46 @@
+name: Bug report
+description: Report an input-fix problem on a KONKR Pocket FIT device
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - KONKR Pocket FIT
+        - KONKR Pocket FIT Elite
+        - Other / unknown
+    validations:
+      required: true
+  - type: input
+    id: steamos
+    attributes:
+      label: SteamOS ARM build/version
+      placeholder: e.g. v1.3-8elite-beta2
+  - type: input
+    id: inputplumber
+    attributes:
+      label: InputPlumber version
+      placeholder: e.g. 0.81.0
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the expected and actual controller behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: Status output
+      description: Paste the output of `sudo ./install.sh --status`.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Boot logs
+      description: Paste `sudo journalctl -u konkr-input-fix -u inputplumber -b --no-pager`.
+      render: shell
